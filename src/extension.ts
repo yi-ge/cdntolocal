@@ -1,26 +1,76 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from 'vscode'
+import axios from 'axios'
+import * as cheerio from 'cheerio'
+import * as fs from 'fs'
+import * as path from 'path'
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "cdntolocal" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('cdntolocal.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from CDNToLocal!');
-	});
-
-	context.subscriptions.push(disposable);
+async function download (url: string, dest: string): Promise<void> {
+  const response = await axios.get(url, { responseType: 'arraybuffer' })
+  fs.writeFileSync(dest, new Buffer(response.data), 'binary')
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function activate (context: vscode.ExtensionContext) {
+  let disposable = vscode.commands.registerCommand('cdntolocal.downloadAndAddFallback', async () => {
+    const editor = vscode.window.activeTextEditor
+    if (!editor) {
+      vscode.window.showErrorMessage('No active editor found.')
+      return
+    }
+
+    const document = editor.document
+    if (document.languageId !== 'html') {
+      vscode.window.showErrorMessage('Current file is not an HTML file.')
+      return
+    }
+
+    const html = document.getText()
+    const $ = cheerio.load(html)
+
+    const cdnElements = $('link[href^="http"], script[src^="http"]')
+
+    for (const element of cdnElements.toArray()) {
+      const url = $(element).attr('href') || $(element).attr('src')
+      if (!url) {
+        continue
+      }
+
+      const localPath = `/local/path/to/${path.basename(url)}` // 根据实际情况修改本地路径
+      try {
+        await download(url, localPath)
+        $(element).attr('onerror', `loadFallbackResource(this, '${localPath}')`)
+      } catch (error: any) {
+        vscode.window.showErrorMessage(`Failed to download ${url}: ${error.message}`)
+      }
+    }
+
+    const newHtml = $.html()
+    const edit = new vscode.WorkspaceEdit()
+    edit.replace(document.uri, new vscode.Range(document.positionAt(0), document.positionAt(html.length)), newHtml)
+    await vscode.workspace.applyEdit(edit)
+
+    const fallbackScript = `
+<script>
+  function loadFallbackResource(element, fallbackUrl) {
+    if (element.tagName === 'LINK') {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = fallbackUrl;
+      document.head.appendChild(link);
+    } else if (element.tagName === 'SCRIPT') {
+      var script = document.createElement('script');
+      script.src = fallbackUrl;
+      document.body.appendChild(script);
+    }
+  }
+</script>
+        `
+
+    editor.edit(editBuilder => {
+      editBuilder.insert(document.positionAt(newHtml.length), fallbackScript)
+    })
+  })
+
+  context.subscriptions.push(disposable)
+}
+
+export function deactivate () { }
