@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "cdntolocal.helloWorld",
-        "title": "Hello World"
+        "command": "cdntolocal.downloadAndAddFallback",
+        "title": "CDNToLocal: Download and Add Fallback"
       }
     ]
   },
