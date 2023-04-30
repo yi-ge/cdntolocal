@@ -52,15 +52,11 @@ export function activate (context: vscode.ExtensionContext) {
         );
 
         try {
-          await download(urlStr, localPath);
-          $(element).attr(
-            'onerror',
-            `loadFallbackResource(this, '${relativePath}')`
-          );
+            await download(urlStr, localPath);
+            $(element).attr('data-fallback-url', relativePath);
+            $(element).attr('onerror', 'event.preventDefault(); loadFallbackResource(this, this.getAttribute(\'data-fallback-url\'))');
         } catch (error: any) {
-          vscode.window.showErrorMessage(
-            `Failed to download ${urlStr}: ${error.message}`
-          );
+            vscode.window.showErrorMessage(`Failed to download ${urlStr}: ${error.message}`);
         }
       }
 
@@ -75,6 +71,9 @@ export function activate (context: vscode.ExtensionContext) {
       const fallbackScript = `
 <script>
   function loadFallbackResource(element, fallbackUrl) {
+    if (!element || !fallbackUrl) {
+      return;
+    }
     const url = new URL(fallbackUrl, window.location.href);
     if (element.tagName === 'LINK') {
       var link = document.createElement('link');
@@ -87,12 +86,22 @@ export function activate (context: vscode.ExtensionContext) {
       document.body.appendChild(script);
     }
   }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const elements = document.querySelectorAll('[onerror*="loadFallbackResource"]');
+    for (const element of elements) {
+      const fallbackUrl = element.getAttribute('data-fallback-url');
+      if (fallbackUrl) {
+        loadFallbackResource(element, fallbackUrl);
+      }
+    }
+  });
 </script>
 `;
 
-      const headCloseTagPosition = updatedDocument.positionAt(updatedHtml.indexOf('</head>'));
+      const titleEndTagPosition = updatedDocument.positionAt(updatedHtml.indexOf('</title>') + 8);
       editor.edit(editBuilder => {
-        editBuilder.insert(headCloseTagPosition, fallbackScript);
+          editBuilder.insert(titleEndTagPosition, fallbackScript);
       });
     }
   );

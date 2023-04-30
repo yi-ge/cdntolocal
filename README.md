@@ -1,71 +1,37 @@
-# cdntolocal README
+# CDN to Local Fallback for HTML Files (VSCode Extension)
 
-This is the README for your extension "cdntolocal". After writing up a brief description, we recommend including the following sections.
+CDN to Local Fallback is a Visual Studio Code extension that automatically downloads CSS and JavaScript resources linked in an HTML file from their CDN URLs, saves them locally, and adds fallback code to the HTML file in case the CDN resources fail to load.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+* Downloads CSS and JavaScript resources from CDN URLs.
+* Saves the downloaded resources in a local directory with the same structure as the CDN.
+* Inserts a fallback script in the HTML file to use local resources if the CDN resources fail to load.
 
-For example if there is an image subfolder under your extension project workspace:
+## Installation
 
-\!\[feature X\]\(images/feature-x.png\)
+1. Open Visual Studio Code.
+2. Press `Ctrl+P` (Windows/Linux) or `Cmd+P` (Mac) to open the Quick Open dialog.
+3. Type `ext install cdntolocal.downloadAndAddFallback` and press Enter to install the extension.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Usage
 
-## Requirements
+1. Open an HTML file in Visual Studio Code.
+2. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac) to open the Command Palette.
+3. Type `CDN to Local Fallback: Download and Add Fallback` and press Enter to run the command.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+The extension will download all the CSS and JavaScript resources from their CDN URLs, save them locally in the `static` directory under the same path as the HTML file, and add a fallback script to the HTML file. If the CDN resources fail to load, the fallback script will automatically switch to using the local resources.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+* If the HTML file has no `<title>` tag, the fallback script will not be inserted properly. Make sure your HTML file has a `<title>` tag.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
+* Initial release of CDN to Local Fallback for HTML Files.
 
-### 1.0.1
+## License
 
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+This extension is licensed under the [MIT License](LICENSE).
